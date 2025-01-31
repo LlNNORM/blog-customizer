@@ -1,6 +1,6 @@
 import { ArrowButton } from 'src/ui/arrow-button';
 import { Button } from 'src/ui/button';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import clsx from 'clsx';
 import { Select } from 'src/ui/select';
 import {
@@ -11,7 +11,7 @@ import {
 	backgroundColors,
 	contentWidthArr,
 } from 'src/constants/articleProps';
-import type { OptionType } from 'src/constants/articleProps';
+import type { ArticleStateType, OptionType } from 'src/constants/articleProps';
 import { RadioGroup } from 'src/ui/radio-group';
 
 import styles from './ArticleParamsForm.module.scss';
@@ -20,10 +20,10 @@ import { Separator } from 'src/ui/separator';
 import { Text } from 'src/ui/text';
 
 type ArticleParamsFormProps = {
-	onSubmit: (selected: typeof defaultArticleState) => void;
+	applyOptions: (selected: ArticleStateType) => void;
 };
 
-export const ArticleParamsForm = ({ onSubmit }: ArticleParamsFormProps) => {
+export const ArticleParamsForm = ({ applyOptions }: ArticleParamsFormProps) => {
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const [selectedFont, setSelectedFont] = useState<OptionType>(
 		defaultArticleState.fontFamilyOption
@@ -31,25 +31,68 @@ export const ArticleParamsForm = ({ onSubmit }: ArticleParamsFormProps) => {
 	const [selectedFontSize, setSelectedFontSize] = useState<OptionType>(
 		defaultArticleState.fontSizeOption
 	);
-	const [selectedFontСolor, setSelectedFontСolor] = useState<OptionType>(
+	const [selectedFontColor, setSelectedFontColor] = useState<OptionType>(
 		defaultArticleState.fontColor
 	);
 	const [selectedBackgroundColor, setSelectedBackgroundColor] =
 		useState<OptionType>(defaultArticleState.backgroundColor);
-	const [selectedСontentWidth, setSelectedСontentWidth] = useState<OptionType>(
+	const [selectedContentWidth, setSelectedContentWidth] = useState<OptionType>(
 		defaultArticleState.contentWidth
 	);
+	const sidebarRef = useRef<HTMLDivElement>(null);
+
+	// Закрытие при клике вне области сайдбара и кнопки его открытия/закрытия
+	useEffect(() => {
+		const handleClickOutside = (e: MouseEvent) => {
+			if (
+				sidebarRef.current &&
+				!sidebarRef.current.contains(e.target as Node) &&
+				!(e.target as HTMLElement).closest('.toggle-button')
+			) {
+				setIsOpen(false);
+			}
+		};
+
+		document.addEventListener('mousedown', handleClickOutside, true);
+		return () => document.removeEventListener('mousedown', handleClickOutside);
+	}, []);
+
+	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		applyOptions({
+			fontFamilyOption: selectedFont,
+			fontSizeOption: selectedFontSize,
+			fontColor: selectedFontColor,
+			backgroundColor: selectedBackgroundColor,
+			contentWidth: selectedContentWidth,
+		});
+	};
+
+	const handleReset = (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		setSelectedFont(defaultArticleState.fontFamilyOption);
+		setSelectedFontSize(defaultArticleState.fontSizeOption);
+		setSelectedFontColor(defaultArticleState.fontColor);
+		setSelectedBackgroundColor(defaultArticleState.backgroundColor);
+		setSelectedContentWidth(defaultArticleState.contentWidth);
+		applyOptions(defaultArticleState);
+	};
+
 	return (
 		<>
 			<ArrowButton
 				isOpen={isOpen}
 				onClick={() => {
-					setIsOpen((isOpen) => !isOpen);
+					setIsOpen((prev) => !prev);
 				}}
 			/>
 			<aside
-				className={clsx(styles.container, { [styles.container_open]: isOpen })}>
-				<form className={styles.form}>
+				className={clsx(styles.container, { [styles.container_open]: isOpen })}
+				ref={sidebarRef}>
+				<form
+					className={styles.form}
+					onSubmit={handleSubmit}
+					onReset={handleReset}>
 					<Text as='h1' size={31} weight={800} uppercase>
 						Задайте параметры
 					</Text>
@@ -68,9 +111,9 @@ export const ArticleParamsForm = ({ onSubmit }: ArticleParamsFormProps) => {
 					/>
 					<Select
 						title='цвет шрифта'
-						selected={selectedFontСolor}
+						selected={selectedFontColor}
 						options={fontColors}
-						onChange={setSelectedFontСolor}
+						onChange={setSelectedFontColor}
 					/>
 					<Separator />
 					<Select
@@ -81,40 +124,13 @@ export const ArticleParamsForm = ({ onSubmit }: ArticleParamsFormProps) => {
 					/>
 					<Select
 						title='ширина контента'
-						selected={selectedСontentWidth}
+						selected={selectedContentWidth}
 						options={contentWidthArr}
-						onChange={setSelectedСontentWidth}
+						onChange={setSelectedContentWidth}
 					/>
 					<div className={styles.bottomContainer}>
-						<Button
-							title='Сбросить'
-							htmlType='reset'
-							type='clear'
-							onClick={(e) => {
-								e.preventDefault();
-								setSelectedFont(defaultArticleState.fontFamilyOption);
-								setSelectedFontSize(defaultArticleState.fontSizeOption);
-								setSelectedFontСolor(defaultArticleState.fontColor);
-								setSelectedBackgroundColor(defaultArticleState.backgroundColor);
-								setSelectedСontentWidth(defaultArticleState.contentWidth);
-								onSubmit(defaultArticleState);
-							}}
-						/>
-						<Button
-							title='Применить'
-							htmlType='submit'
-							type='apply'
-							onClick={(e) => {
-								e.preventDefault();
-								onSubmit({
-									fontFamilyOption: selectedFont,
-									fontSizeOption: selectedFontSize,
-									fontColor: selectedFontСolor,
-									backgroundColor: selectedBackgroundColor,
-									contentWidth: selectedСontentWidth,
-								});
-							}}
-						/>
+						<Button title='Сбросить' htmlType='reset' type='clear' />
+						<Button title='Применить' htmlType='submit' type='apply' />
 					</div>
 				</form>
 			</aside>
