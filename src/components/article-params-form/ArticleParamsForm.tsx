@@ -39,23 +39,22 @@ export const ArticleParamsForm = ({ applyOptions }: ArticleParamsFormProps) => {
 	const [selectedContentWidth, setSelectedContentWidth] = useState<OptionType>(
 		defaultArticleState.contentWidth
 	);
-	const sidebarRef = useRef<HTMLDivElement>(null);
+	const sidebarRef = useRef<HTMLDivElement | null>(null);
 
 	// Закрытие при клике вне области сайдбара и кнопки его открытия/закрытия
 	useEffect(() => {
 		const handleClickOutside = (e: MouseEvent) => {
 			if (
-				sidebarRef.current &&
-				!sidebarRef.current.contains(e.target as Node) &&
+				isOpen &&
+				!sidebarRef.current?.contains(e.target as Node) &&
 				!(e.target as HTMLElement).closest('.toggle-button')
 			) {
 				setIsOpen(false);
 			}
 		};
-
-		document.addEventListener('mousedown', handleClickOutside, true);
+		document.addEventListener('mousedown', handleClickOutside);
 		return () => document.removeEventListener('mousedown', handleClickOutside);
-	}, []);
+	}, [isOpen]);
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
