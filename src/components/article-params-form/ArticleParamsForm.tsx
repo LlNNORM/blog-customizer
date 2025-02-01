@@ -44,8 +44,8 @@ export const ArticleParamsForm = ({ applyOptions }: ArticleParamsFormProps) => {
 	// Закрытие при клике вне области сайдбара и кнопки его открытия/закрытия
 	useEffect(() => {
 		const handleClickOutside = (e: MouseEvent) => {
+			if (!isOpen) return;
 			if (
-				isOpen &&
 				!sidebarRef.current?.contains(e.target as Node) &&
 				!(e.target as HTMLElement).closest('.toggle-button')
 			) {
